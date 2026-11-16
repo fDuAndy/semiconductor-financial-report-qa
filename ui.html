@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>集成电路半导体财报问答库</title>
+  <style>
+    :root { color-scheme: light; font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; color: #17263c; background: #f2f5fa; }
+    body { margin: 0; }
+    main { width: min(980px, calc(100% - 36px)); margin: 44px auto; }
+    h1 { margin: 0 0 8px; font-size: 29px; letter-spacing: .02em; }
+    .intro { margin: 0 0 24px; color: #57677c; }
+    .panel, .answer, .citation { border: 1px solid #dce4ef; border-radius: 12px; background: white; }
+    .panel { padding: 18px; box-shadow: 0 6px 20px #203b5b0b; }
+    textarea { display: block; box-sizing: border-box; width: 100%; min-height: 88px; resize: vertical; border: 1px solid #bdc9d8; border-radius: 8px; padding: 12px; font: inherit; line-height: 1.6; outline-color: #3978df; }
+    button { margin-top: 12px; border: 0; border-radius: 8px; padding: 10px 18px; background: #155eef; color: white; font: inherit; cursor: pointer; }
+    button:disabled { opacity: .65; cursor: wait; }
+    .answer { margin: 18px 0; padding: 16px 18px; border-left: 4px solid #3677e8; }
+    .answer h2 { margin: 0 0 6px; font-size: 17px; }
+    .answer p { margin: 0; line-height: 1.65; }
+    .coverage { margin-top: 10px; color: #52667e; font-size: 13px; }
+    .coverage span { display: inline-block; margin: 3px 5px 0 0; border-radius: 999px; padding: 2px 9px; background: #e8f5ed; color: #167347; }
+    .citation { margin: 12px 0; padding: 16px 18px; }
+    .citation h3 { display: inline; margin: 0; font-size: 16px; }
+    .meta { color: #5b6b80; font-size: 13px; }
+    .quote { margin: 12px 0; white-space: pre-wrap; line-height: 1.65; }
+    a { color: #155eef; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empty { margin: 18px 0; color: #6a788b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>集成电路半导体财报问答库</h1>
+    <p class="intro">检索10家上市公司2025年年报。每条证据标出公司、PDF页码和巨潮资讯原文链接。</p>
+    <section class="panel">
+      <textarea id="question" aria-label="输入财报问题" placeholder="例如：中芯国际2025年营业收入是多少？"></textarea>
+      <button id="submit" type="button">提问并查看出处</button>
+    </section>
+    <div id="results" aria-live="polite"></div>
+  </main>
+  <script>
+    const questionBox = document.getElementById("question");
+    const submitButton = document.getElementById("submit");
+    const resultsBox = document.getElementById("results");
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      }[character]));
+    }
+
+    function render(payload) {
+      const expected = payload.coverage.requested.length;
+      const found = payload.coverage.found.length;
+      const count = expected ? `${found}/${expected}家公司` : `${payload.results.length}条证据`;
+      const coverage = !expected && !payload.results.length
+        ? ""
+        : payload.coverage.missing.length
+        ? `<div class="coverage">缺少证据：${payload.coverage.missing.map(escapeHtml).join("、")}</div>`
+        : `<div class="coverage"><span>当前检索覆盖 ${count}</span></div>`;
+      const cards = payload.results.map((item) => `
+        <article class="citation">
+          <h3>${escapeHtml(item.company)}（${escapeHtml(item.code)}）</h3>
+          <span class="meta">　2025年年报 · PDF第${item.pdf_page}页 · ${escapeHtml(item.id)}</span>
+          <p class="quote">${escapeHtml(item.text)}</p>
+          <div class="meta">来源：<a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener">巨潮资讯年报原文</a> · ${escapeHtml(item.source_file)}</div>
+        </article>`).join("");
+      resultsBox.innerHTML = `
+        <section class="answer"><h2>检索答复</h2><p>${escapeHtml(payload.answer)}</p>${coverage}</section>
+        ${cards || '<p class="empty">没有可展示的年报证据。</p>'}`;
+    }
+
+    async function ask() {
+      const query = questionBox.value.trim();
+      if (!query) return;
+      submitButton.disabled = true;
+      submitButton.textContent = "检索中…";
+      resultsBox.textContent = "正在检索年报证据…";
+      try {
+        const response = await fetch("/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
+        render(await response.json());
+      } catch {
+        resultsBox.textContent = "检索暂时失败，请确认本地服务仍在运行。";
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "提问并查看出处";
+      }
+    }
+
+    submitButton.addEventListener("click", ask);
+    questionBox.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") ask();
+    });
+  </script>
+</body>
+</html>
