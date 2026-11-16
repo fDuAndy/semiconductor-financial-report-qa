@@ -4,7 +4,7 @@
 
 ## 本地运行
 
-在 `semiconductor_kb` 目录执行：
+在仓库根目录执行：
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -17,7 +17,7 @@ python app.py
 
 ## 项目文件
 
-- `reports/`：10份官方年报PDF全文。
+- `reports/`：运行下载脚本后存放10份官方年报PDF；PDF原件不提交到仓库。
 - `reports/report_inventory.csv`：PDF页数、文件大小、SHA-256、提取字符数和空白页数量。
 - `sources.json`：公司、产业链环节、原文件名和巨潮资讯来源链接。
 - `build_corpus.py`：逐页提取文本并按约800字符、120字符重叠切块。
@@ -25,12 +25,12 @@ python app.py
 - `app.py`：本地检索问答页面。
 - `ui.html`：本地问答页面界面。
 - `download_reports.py`：按官方链接下载缺失年报PDF。
-- `evaluation/`：10题、首轮与修复后逐题召回记录、人工核验和页面截图。
+- `evaluation/`：10题、首轮与修复后逐题召回记录、人工核验、一页结论和页面截图（`evaluation/screenshots/`）。
 - `方向A作业问答地图_集成电路半导体版.md`：半导体样本和10题测试设计。
 
 ## 使用边界
 
 年报表格的PDF文本提取可能出现列错位、单位与数值分离或跨页断行。涉及财务数字的答案应回看原PDF对应页，并确认合并或母公司口径、币种、单位、调整前后数据和报告期间。检索命中只代表找到候选证据，不代表答案已核实。PDF页码为阅读器页序；如需印刷页码，应回到原件核对。
 
-`evaluation/assessment.json`记录了10道开发用例的人工核验结果：7题通过、1题部分通过、2题未通过；该结果不是独立测试准确率。`evaluation/方向A一页结论.pdf`和`screenshots/`可用于作业展示。公开代码仓库时，原始财报PDF由`.gitignore`排除；请保留来源清单、下载脚本、处理语料和评测记录。
+`evaluation/assessment.json`记录了10道开发用例的人工核验结果：7题通过、1题部分通过、2题未通过；该结果不是独立测试准确率。`evaluation/方向A一页结论.pdf`和`evaluation/screenshots/`可用于作业展示。原始财报PDF由`.gitignore`排除；请保留来源清单、下载脚本、处理语料和评测记录。
 
